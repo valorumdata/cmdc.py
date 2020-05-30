@@ -125,6 +125,8 @@ class Client(object):
             raise ValueError("Could not request the API structure -- try again!")
         self._spec = res.json()
 
+        self.datasets = [x.strip("/") for x in self._spec["paths"] if x != "/"]
+
         if self.key is None:
             msg = (
                 "No API key found. Please request a "

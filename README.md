@@ -115,4 +115,3 @@ c = Client()
 )
 df = c.fetch()
 ```
-
