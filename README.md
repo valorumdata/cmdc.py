@@ -1,7 +1,5 @@
 # cmdc.py
 
-# TODO: Add docs about the main keys and how they interact
-
 `cmdc` is a Python client for accessing the COVID Modeling Data Collaborative database
 
 
