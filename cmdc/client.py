@@ -125,8 +125,6 @@ class Client(object):
             raise ValueError("Could not request the API structure -- try again!")
         self._spec = res.json()
 
-        self.datasets = [x.strip("/") for x in self._spec["paths"] if x != "/"]
-
         if self.key is None:
             msg = (
                 "No API key found. Please request a "
@@ -357,6 +355,10 @@ class Client(object):
     def __dir__(self) -> List[str]:
         paths = self._spec["paths"]
         return [x.strip("/") for x in paths if x != "/"]
+    
+    @property
+    def datasets(self):
+        return self.__dir__()
 
     def __repr__(self) -> str:
         out = "CMDC Client"
