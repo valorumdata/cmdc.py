@@ -55,16 +55,17 @@ All of the data in our database is indexed by one or more common "keys". These k
 
 Whenever two series with common keys are loaded together, they will be merged on their common keys.
 
+
 ## API Keys
 
-The CMDC data is publically available and free of charge. We intend to keep it that way forever.
+The CMDC data is publicly available and free of charge. We intend to keep it that way.
 
 We do have an API key system for a few reasons:
 
 1. To understand usage patterns that might help us prioritize work going forward
 2. To understand the breadth of our user base. We want to make sure we are as helpful to as many groups as possible and keeping a rough idea of how many groups there are is a good benchmark!
 
-The CMDC library can automatically handle API keys for you. 
+The CMDC library can automatically handle API keys for you.
 
 If opt in to using an API key, please run the `register` method on the client as shown below:
 
@@ -76,6 +77,7 @@ c.register()
 You will be prompted for your email address. After entering a valid email address we will issue an API key, store it on your machine, and automatically apply it to all future requests to our servers.
 
 If at any time you would like to remove your API key, please delete the file `~/.cmdc/apikey`
+
 
 ## Examples
 
