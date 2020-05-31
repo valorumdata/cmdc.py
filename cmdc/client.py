@@ -355,6 +355,10 @@ class Client(object):
     def __dir__(self) -> List[str]:
         paths = self._spec["paths"]
         return [x.strip("/") for x in paths if x != "/"]
+    
+    @property
+    def datasets(self):
+        return self.__dir__()
 
     def __repr__(self) -> str:
         out = "CMDC Client"
