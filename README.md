@@ -2,6 +2,13 @@
 
 `cmdc` is a Python client for accessing the COVID Modeling Data Collaborative database
 
+Links:
+
+- [Repository](https://github.com/valorumdata/cmdc.py)
+- [Website](https://covid.valorum.ai/)
+- [Raw REST API](https://covid.valorum.ai/rest-api)
+- [GraphQL API](https://covid.valorum.ai/graphql-api)
+
 
 ## COVID Modeling Data Collaborative
 
