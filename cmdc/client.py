@@ -1,11 +1,14 @@
 #%%
-import requests
 import pathlib
 import urllib
 from typing import Dict, List, Any
 
 from email_validator import validate_email, EmailNotValidError
 import pandas as pd
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
 
 BASE_URL = "https://api.covid.valorum.ai"
 
@@ -99,6 +102,20 @@ def create_filter_rhs(x: Any) -> str:
     return f"eq.{x}"
 
 
+def setup_session() -> requests.Session:
+    retry_strategy = Retry(
+        total=5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        method_whitelist=["HEAD", "GET", "OPTIONS"],
+        backoff_factor=0.2,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount("https://", adapter)
+    http.mount("http://", adapter)
+    return http
+
+
 #%%
 class Client:
     def __init__(self, apikey=None):
@@ -137,7 +154,7 @@ class Client:
         self._current_request = {}
         self._current_request_headers = {}
         self._key = apikey
-        self.sess = requests.Session()
+        self.sess = setup_session()
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
             raise ValueError("Could not request the API structure -- try again!")
