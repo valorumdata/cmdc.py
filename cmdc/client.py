@@ -10,14 +10,14 @@ import pandas as pd
 BASE_URL = "https://api.covid.valorum.ai"
 
 
-class Request:
+class Endpoint:
     """
     Internal class to be used when building up a request
     """
 
     def __init__(self, client: "Client", path: str, parameters: List[Dict[str, List]]):
         """
-        Create a Request builder object
+        Create a Endpoint builder object
 
         Parameters
         ----------
@@ -25,7 +25,7 @@ class Request:
             The API Client that should be returned after calling an instance of
             this class
         path: string
-            The API path for which the Request will be built
+            The API path for which the Endpoint will be built
         parameters: List[Dict[str, List]]
             A list of OpenAPI 2.0 parameters for this endpoint
         """
@@ -358,13 +358,13 @@ class Client:
         return output
 
     ## Dynamic query builder
-    def __getattr__(self, ds: str) -> Request:
+    def __getattr__(self, ds: str) -> Endpoint:
         if ds not in dir(self):
             msg = f"Unknown dataset {ds}. Known datasets are {dir(self)}"
             raise ValueError(msg)
 
         route = self._spec["paths"]["/" + ds]["get"]
-        return Request(self, ds, route["parameters"])
+        return Endpoint(self, ds, route["parameters"])
 
     def __dir__(self) -> List[str]:
         paths = self._spec["paths"]
