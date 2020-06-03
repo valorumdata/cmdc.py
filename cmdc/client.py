@@ -4,12 +4,13 @@ import pathlib
 import urllib
 from typing import Dict, List, Any
 
+from email_validator import validate_email, EmailNotValidError
 import pandas as pd
 
 BASE_URL = "https://api.covid.valorum.ai"
 
 
-class Request(object):
+class Request:
     """
     Internal class to be used when building up a request
     """
@@ -51,14 +52,13 @@ class Request(object):
         """
         return param in self.filter_names
 
-    def __call__(self, **filters) -> "Client":
+    def __call__(self, state=None, **filters) -> "Client":
         """
         Validate a given set of query parameters and confirm they are applicable
         for this endpoint
         """
         # process filters
-        filtered = []
-        for name, val in filters.items():
+        for name in filters:
             # TODO: add validation of parameter type
             if not self.has_filter(name):
                 msg = (
@@ -66,6 +66,7 @@ class Request(object):
                     f"Valid filters are {', '.join(self.filter_names)}"
                 )
                 raise ValueError(msg)
+
 
         self.client.add_request(self.path, filters)
 
@@ -89,7 +90,7 @@ def create_filter_rhs(x: Any) -> str:
     return f"eq.{x}"
 
 
-class Client(object):
+class Client:
     def __init__(self, apikey=None):
         """
         API Client for the CMDC database
@@ -139,8 +140,6 @@ class Client(object):
             )
             print(msg)
 
-        pass
-
     ## API key handling
     @property
     def key(self):
@@ -166,8 +165,6 @@ class Client(object):
         self._key = x
 
     def register(self) -> str:
-        from email_validator import validate_email, EmailNotValidError
-
         msg = "Please provide an email address to request a free API key: "
         email = input(msg)
 
@@ -256,7 +253,7 @@ class Client(object):
                     common_filters[filt_name] = filt_val
 
         # for each request, add in common filters that apply
-        for path in out.keys():
+        for path in out:
             for filt_name, filt_val in common_filters.items():
                 if self.__getattr__(path).has_filter(filt_name):
                     out[path][filt_name] = filt_val
@@ -339,7 +336,7 @@ class Client(object):
     def fetch(self) -> pd.DataFrame:
         if len(self._current_request) == 0:
             print("You have no requests built up! Try adding a dataset")
-            return
+            return None
         filters = self._unionize_filters()
         query_strings = {k: self._create_query_string(k, v) for k, v in filters.items()}
         dfs = self._run_queries(query_strings)
@@ -352,7 +349,7 @@ class Client(object):
 
     ## Dynamic query builder
     def __getattr__(self, ds: str) -> Request:
-        if not ds in dir(self):
+        if ds not in dir(self):
             msg = f"Unknown dataset {ds}. Known datasets are {dir(self)}"
             raise ValueError(msg)
 
