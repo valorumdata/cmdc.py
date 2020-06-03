@@ -67,7 +67,6 @@ class Request:
                 )
                 raise ValueError(msg)
 
-
         self.client.add_request(self.path, filters)
 
         return self.client
@@ -81,15 +80,24 @@ class Request:
         return msg
 
 
+#%%
 def create_filter_rhs(x: Any) -> str:
-    """
-    Parse the string `x` to be a postgrest accepted string for filtering
-    rows
-    """
-    # TODO: handle more than just eq
+    ineqs = {">": "gt", "<": "lt", "!=": "neq"}
+    if isinstance(x, (list, tuple, set)):
+        # use in
+        return f"in.({','.join(map(str, x))})"
+
+    if isinstance(x, str):
+        # check for inequality
+        for op in ineqs:
+            if op in x:
+                if f"{op}=" in x:
+                    return x.replace(f"{op}=", ineqs[op] + "e.")
+                return x.replace(op, ineqs[op] + ".")
     return f"eq.{x}"
 
 
+#%%
 class Client:
     def __init__(self, apikey=None):
         """
