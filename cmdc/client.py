@@ -196,7 +196,7 @@ class Client:
     def fips_in_states(self, states: Union[List[int], int]):
         if isinstance(states, (int, str)):
             states = [states]
-        states = [int(us.states.lookup(str(x)).fips) for x in states]
+        states = [int(us.states.lookup(str(x).zfill(2)).fips) for x in states]
         fips = self.counties.query("state in @states")["fips"].unique()
         return sorted(list(fips)) + states
 
