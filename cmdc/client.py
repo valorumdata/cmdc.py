@@ -125,7 +125,7 @@ class Client(object):
         """
         self._current_request = {}
         self._current_request_headers = {}
-        self._key = apikey
+        self.key = apikey
         self.sess = requests.Session()
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
