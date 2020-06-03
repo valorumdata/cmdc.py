@@ -73,9 +73,11 @@ class Request:
 
     def __repr__(self) -> str:
         filter_names = [x["name"] for x in self.valid_filters]
+        description = self.client._spec["paths"]["/" + self.path]["get"]["description"]
         msg = (
             f"Request builder for {self.path} endpoint"
             f"\nValid filters are {', '.join(filter_names)}"
+            f"\n\n\n{description}"
         )
         return msg
 
