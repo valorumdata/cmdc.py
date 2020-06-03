@@ -15,10 +15,6 @@ BASE_URL = "https://api.covid.valorum.ai"
 
 
 class Endpoint:
-    """
-    Internal class to be used when building up a request
-    """
-
     def __init__(self, client: "Client", path: str, parameters: List[Dict[str, List]]):
         """
         Create a Endpoint builder object
@@ -92,6 +88,10 @@ class Endpoint:
             f"\n\n\n{description}"
         )
         return msg
+
+    @property
+    def __doc__(self):
+        return self.__repr__()
 
 
 #%%
