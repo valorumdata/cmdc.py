@@ -1,13 +1,14 @@
 #%%
 import pathlib
 import urllib
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
+from urllib3.util.retry import Retry
 
 from email_validator import validate_email, EmailNotValidError
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import us
 
 
 BASE_URL = "https://api.covid.valorum.ai"
@@ -60,6 +61,14 @@ class Endpoint:
         Validate a given set of query parameters and confirm they are applicable
         for this endpoint
         """
+        if state is not None and self.has_filter("fips"):
+            if "fips" in filters:
+                msg = f"Both state {state} and fips {filters['fips']} were passed."
+                msg += " Only one may be applied at a time"
+                raise ValueError(msg)
+
+            filters["fips"] = self.client.fips_in_states(state)
+
         # process filters
         for name in filters:
             # TODO: add validation of parameter type
@@ -155,6 +164,7 @@ class Client:
         self._current_request_headers = {}
         self._key = apikey
         self.sess = setup_session()
+        self._counties = None
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
             raise ValueError("Could not request the API structure -- try again!")
@@ -166,6 +176,29 @@ class Client:
                 "free API key by calling the `register` method"
             )
             print(msg)
+
+    ## county/state map
+    @property
+    def counties(self):
+        if self._counties is None:
+            # fetch
+            res = self.sess.get(BASE_URL + "/counties")
+            if not res.ok:
+                raise ValueError("Failed to get list of counties")
+
+            self._counties = pd.DataFrame(res.json())
+            self._counties["state"] = (
+                self._counties["fips"].astype(str).str.zfill(5).str[:2].astype(int)
+            )
+
+        return self._counties
+
+    def fips_in_states(self, states: Union[List[int], int]):
+        if isinstance(states, (int, str)):
+            states = [states]
+        states = [int(us.states.lookup(str(x)).fips) for x in states]
+        fips = self.counties.query("state in @states")["fips"].unique()
+        return sorted(list(fips)) + states
 
     ## API key handling
     @property
@@ -411,3 +444,6 @@ class Client:
         self._current_request = {}
         self._current_request_headers = {}
         return self
+
+
+# %%
