@@ -2,11 +2,20 @@
 import requests
 import pathlib
 import urllib
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 import pandas as pd
 
 BASE_URL = "https://api.covid.valorum.ai"
+
+
+class NetworkError(Exception):
+    def __init__(self, res: requests.Response, msg: str):
+        full_msg = (
+            msg + f"\n\nRequest failed with code {res.status_code} "
+            f"and content {res.content}"
+        )
+        super().__init__(full_msg)
 
 
 class Request(object):
@@ -129,7 +138,8 @@ class Client(object):
         self._set_key(apikey)
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
-            raise ValueError("Could not request the API structure -- try again!")
+            msg = "Could not request the API structure. Please try again!"
+            raise NetworkError(res, msg)
         self._spec = res.json()
 
         if self.key is None:
@@ -168,12 +178,12 @@ class Client(object):
     def key(self, x):
         return self._set_key(x)
 
-
-    def register(self) -> str:
+    def register(self, email: Optional[str] = None) -> str:
         from email_validator import validate_email, EmailNotValidError
 
-        msg = "Please provide an email address to request a free API key: "
-        email = input(msg)
+        if email is None:
+            msg = "Please provide an email address to request a free API key: "
+            email = input(msg)
 
         try:
             valid = validate_email(email)
@@ -184,8 +194,7 @@ class Client(object):
         res = requests.post(BASE_URL + "/auth", data=dict(email=email))
 
         if not res.ok:
-            msg = f"Could not request api key. Message from server: {res.content}"
-            raise ValueError(msg)
+            raise NetworkError(res, "Could not request api key.")
 
         self.key = res.json()["key"]
         print("The API key has been saved and will be used in future sessions")
@@ -250,7 +259,7 @@ class Client(object):
                     current = common_filters[filt_name]
                     if current != filt_val:
                         msg = (
-                            f"Found conflicting values for common "
+                            "Found conflicting values for common "
                             f"filter {filt_name}. "
                             f"Found both {filt_val} and {current}"
                         )
@@ -282,7 +291,7 @@ class Client(object):
         "Make GET request to `url` and parse resulting JSON as DataFrame"
         res = self.sess.get(url)
         if not res.ok:
-            raise ValueError(f"Error fetching {url}: {res.content}")
+            raise NetworkError(res, f"Error fetching data from {url}")
         df = pd.DataFrame(res.json())
         for col in ["dt", "meta_date", "vintage"]:
             if col in list(df):
@@ -308,9 +317,12 @@ class Client(object):
         cols = list(df)
         for c in ["variable", "value"]:
             if c not in cols:
-                raise ValueError(
-                    f"Column {c} not found in DataFrame. Please report a bug"
+                gh_issues = "https://github.com/valorumdata/cmdc.py/issues/new"
+                msg = (
+                    f"Column {c} not found in DataFrame. "
+                    f"Please report a bug at {gh_issues}"
                 )
+                raise ValueError(msg)
         if "meta_date" in cols:
             if "variable" in cols:
                 df["variable"] = (
