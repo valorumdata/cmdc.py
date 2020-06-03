@@ -90,9 +90,16 @@ def create_filter_rhs(x: Any) -> str:
 
 
 class Client(object):
-    def __init__(self):
+    def __init__(self, apikey=None):
         """
         API Client for the CMDC database
+
+        Parameters
+        ----------
+        apikey : str (Optional)
+            The API key to access the system. This is an optional
+            argument and `Client` can create one for you through
+            the `register` method.
 
         Examples
         --------
@@ -118,7 +125,7 @@ class Client(object):
         """
         self._current_request = {}
         self._current_request_headers = {}
-        self._key = None
+        self._key = apikey
         self.sess = requests.Session()
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
@@ -355,7 +362,7 @@ class Client(object):
     def __dir__(self) -> List[str]:
         paths = self._spec["paths"]
         return [x.strip("/") for x in paths if x != "/"]
-    
+
     @property
     def datasets(self):
         return self.__dir__()
