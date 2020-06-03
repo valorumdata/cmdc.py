@@ -125,8 +125,8 @@ class Client(object):
         """
         self._current_request = {}
         self._current_request_headers = {}
-        self.key = apikey
         self.sess = requests.Session()
+        self._set_key(apikey)
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
             raise ValueError("Could not request the API structure -- try again!")
@@ -157,13 +157,17 @@ class Client(object):
 
         return self._key
 
-    @key.setter
-    def key(self, x):
+    def _set_key(self, x):
         if x is not None:
             self.sess.headers.update({"apikey": x})
             with open(self._keypath, "w") as f:
                 f.write(x)
         self._key = x
+
+    @key.setter
+    def key(self, x):
+        return self._set_key(x)
+
 
     def register(self) -> str:
         from email_validator import validate_email, EmailNotValidError
