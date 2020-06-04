@@ -45,8 +45,6 @@ The currently available datasets include:
 - `covid_historical`: Same as the covid table, but with an additional `vintage` column that tracks the date the data was accessed.
 - `demographics`: A dataset that incorporates baseline information about the different U.S. geographies. Includes data such as total population, fraction of the population over 65, fraction of individuals who are uninsured, etc...
 - `economics`: This dataset includes information about the state of the economy in different geographic areas.
-- `counites`: Reference table with basic information about us counties
-- `states`: Reference table with basic information about us states
 
 ### Data keys
 
