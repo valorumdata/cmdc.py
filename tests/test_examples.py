@@ -1,12 +1,15 @@
 import inspect
+import os
+
 import pandas as pd
 import pytest
+
 import cmdc.examples
 
 
 @pytest.fixture(scope="session")
 def client():
-    return cmdc.Client()
+    return cmdc.Client(apikey=os.environ.get("CMDC_API_KEY", None))
 
 
 @pytest.mark.parametrize(
