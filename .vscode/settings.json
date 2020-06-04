@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "/home/sglyon/anaconda3/envs/cmdc/bin/python"
+    "python.pythonPath": "/home/sglyon/anaconda3/envs/cmdc/bin/python",
+    "python.linting.prospectorEnabled": true,
+    "python.linting.enabled": true
 }

@@ -1,22 +1,23 @@
 #%%
-import requests
 import pathlib
 import urllib
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
+from urllib3.util.retry import Retry
 
+from email_validator import validate_email, EmailNotValidError
 import pandas as pd
+import requests
+from requests.adapters import HTTPAdapter
+import us
+
 
 BASE_URL = "https://api.covid.valorum.ai"
 
 
-class Request(object):
-    """
-    Internal class to be used when building up a request
-    """
-
+class Endpoint:
     def __init__(self, client: "Client", path: str, parameters: List[Dict[str, List]]):
         """
-        Create a Request builder object
+        Create a Endpoint builder object
 
         Parameters
         ----------
@@ -24,7 +25,7 @@ class Request(object):
             The API Client that should be returned after calling an instance of
             this class
         path: string
-            The API path for which the Request will be built
+            The API path for which the Endpoint will be built
         parameters: List[Dict[str, List]]
             A list of OpenAPI 2.0 parameters for this endpoint
         """
@@ -51,14 +52,21 @@ class Request(object):
         """
         return param in self.filter_names
 
-    def __call__(self, **filters) -> "Client":
+    def __call__(self, state=None, **filters) -> "Client":
         """
         Validate a given set of query parameters and confirm they are applicable
         for this endpoint
         """
+        if state is not None and self.has_filter("fips"):
+            if "fips" in filters:
+                msg = f"Both state {state} and fips {filters['fips']} were passed."
+                msg += " Only one may be applied at a time"
+                raise ValueError(msg)
+
+            filters["fips"] = self.client.fips_in_states(state)
+
         # process filters
-        filtered = []
-        for name, val in filters.items():
+        for name in filters:
             # TODO: add validation of parameter type
             if not self.has_filter(name):
                 msg = (
@@ -73,23 +81,52 @@ class Request(object):
 
     def __repr__(self) -> str:
         filter_names = [x["name"] for x in self.valid_filters]
+        description = self.client._spec["paths"]["/" + self.path]["get"]["description"]
         msg = (
             f"Request builder for {self.path} endpoint"
             f"\nValid filters are {', '.join(filter_names)}"
+            f"\n\n\n{description}"
         )
         return msg
 
+    @property
+    def __doc__(self):
+        return self.__repr__()
 
+
+#%%
 def create_filter_rhs(x: Any) -> str:
-    """
-    Parse the string `x` to be a postgrest accepted string for filtering
-    rows
-    """
-    # TODO: handle more than just eq
+    ineqs = {">": "gt", "<": "lt", "!=": "neq"}
+    if isinstance(x, (list, tuple, set)):
+        # use in
+        return f"in.({','.join(map(str, x))})"
+
+    if isinstance(x, str):
+        # check for inequality
+        for op in ineqs:
+            if op in x:
+                if f"{op}=" in x:
+                    return x.replace(f"{op}=", ineqs[op] + "e.")
+                return x.replace(op, ineqs[op] + ".")
     return f"eq.{x}"
 
 
-class Client(object):
+def setup_session() -> requests.Session:
+    retry_strategy = Retry(
+        total=5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        method_whitelist=["HEAD", "GET", "OPTIONS"],
+        backoff_factor=0.2,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount("https://", adapter)
+    http.mount("http://", adapter)
+    return http
+
+
+#%%
+class Client:
     def __init__(self, apikey=None):
         """
         API Client for the CMDC database
@@ -125,8 +162,9 @@ class Client(object):
         """
         self._current_request = {}
         self._current_request_headers = {}
-        self.sess = requests.Session()
         self._set_key(apikey)
+        self.sess = setup_session()
+        self._counties = None
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
             raise ValueError("Could not request the API structure -- try again!")
@@ -139,7 +177,28 @@ class Client(object):
             )
             print(msg)
 
-        pass
+    ## county/state map
+    @property
+    def counties(self):
+        if self._counties is None:
+            # fetch
+            res = self.sess.get(BASE_URL + "/counties")
+            if not res.ok:
+                raise ValueError("Failed to get list of counties")
+
+            self._counties = pd.DataFrame(res.json())
+            self._counties["state"] = (
+                self._counties["fips"].astype(str).str.zfill(5).str[:2].astype(int)
+            )
+
+        return self._counties
+
+    def fips_in_states(self, states: Union[List[int], int]):
+        if isinstance(states, (int, str)):
+            states = [states]
+        states = [int(us.states.lookup(str(x).zfill(2)).fips) for x in states]
+        fips = self.counties.query("state in @states")["fips"].unique()
+        return sorted(list(fips)) + states
 
     ## API key handling
     @property
@@ -170,8 +229,6 @@ class Client(object):
 
 
     def register(self) -> str:
-        from email_validator import validate_email, EmailNotValidError
-
         msg = "Please provide an email address to request a free API key: "
         email = input(msg)
 
@@ -260,7 +317,7 @@ class Client(object):
                     common_filters[filt_name] = filt_val
 
         # for each request, add in common filters that apply
-        for path in out.keys():
+        for path in out:
             for filt_name, filt_val in common_filters.items():
                 if self.__getattr__(path).has_filter(filt_name):
                     out[path][filt_name] = filt_val
@@ -343,7 +400,7 @@ class Client(object):
     def fetch(self) -> pd.DataFrame:
         if len(self._current_request) == 0:
             print("You have no requests built up! Try adding a dataset")
-            return
+            return None
         filters = self._unionize_filters()
         query_strings = {k: self._create_query_string(k, v) for k, v in filters.items()}
         dfs = self._run_queries(query_strings)
@@ -355,13 +412,13 @@ class Client(object):
         return output
 
     ## Dynamic query builder
-    def __getattr__(self, ds: str) -> Request:
-        if not ds in dir(self):
+    def __getattr__(self, ds: str) -> Endpoint:
+        if ds not in dir(self):
             msg = f"Unknown dataset {ds}. Known datasets are {dir(self)}"
             raise ValueError(msg)
 
         route = self._spec["paths"]["/" + ds]["get"]
-        return Request(self, ds, route["parameters"])
+        return Endpoint(self, ds, route["parameters"])
 
     def __dir__(self) -> List[str]:
         paths = self._spec["paths"]
