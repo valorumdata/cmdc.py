@@ -88,8 +88,10 @@ We provide a few simple examples here in the README, but you can find additional
 The example below loads all within county mobility data
 
 ```python
+
 c = cmdc.Client()
-c.cex_county_dex()
+
+c.mobility_devices()
 df = c.fetch()
 ```
 
@@ -104,6 +106,19 @@ c = Client()
 c.demographics(fips=48453)
 df = c.fetch()
 ```
+
+### Simple Example: Single dataset for all counties in a state
+
+The example below loads just demographic information for all counties in Texas.
+
+Notice that we can select a particular geography by specifying the fips code. We can do similar things for any of they keys listed previously.
+
+```python
+c = Client()
+c.demographics(state=48)
+df = c.fetch()
+```
+
 
 ### Intermediate Example: Multiple datasets for single county
 
@@ -121,6 +136,10 @@ c = Client()
 df = c.fetch()
 ```
 
+### Intermediate Example: Multiple datasets for all counties within one state
+
+The example below
+
 ### Advanced Example: Multiple datasets with multiple filters and variable selection
 
 The example below loads data from three datasets for a particular FIPS code, using a particular date of demographics, and selects certain variables from the datasets.
@@ -135,3 +154,5 @@ c = Client()
 )
 df = c.fetch()
 ```
+
+There are more examples in the `examples` folder. We encourage you to explore them and to reach out if you have questions!
