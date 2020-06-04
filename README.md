@@ -39,13 +39,14 @@ You can also find documentation for these datasets [online](https://covid.valoru
 
 The currently available datasets include:
 
-- `cex_county_dex`: A [dataset](https://github.com/COVIDExposureIndices/COVIDExposureIndices) produced by researchers at Berkeley, U Chicago, U Penn, and Yale on within county mobility
-- `cex_county_lex`: A [dataset](https://github.com/COVIDExposureIndices/COVIDExposureIndices) produced by researchers at Berkeley, U Chicago, U Penn, and Yale on across county mobility
-- `cex_state_dex`: A [dataset](https://github.com/COVIDExposureIndices/COVIDExposureIndices) produced by researchers at Berkeley, U Chicago, U Penn, and Yale on within state mobility
-- `cex_state_dex`: A [dataset](https://github.com/COVIDExposureIndices/COVIDExposureIndices) produced by researchers at Berkeley, U Chicago, U Penn, and Yale on across state mobility
-- `covid`: This dataset includes information specific to the COVID pandemic including information like total cases, tests, and hospitalizations. It is based only on official sources and builds on the excellent work of [COVID Atlas](https://covidatlas.com/) and the [COVID Tracking Project](https://covidtracking.com/).
+- `mobility_devices`: A [dataset](https://github.com/COVIDExposureIndices/COVIDExposureIndices) produced by researchers at Berkeley, U Chicago, U Penn, and Yale on within county mobility
+- `mobility_locations`: A [dataset](https://github.com/COVIDExposureIndices/COVIDExposureIndices) produced by researchers at Berkeley, U Chicago, U Penn, and Yale on within state mobility
+- `covid`: This dataset includes information specific to the COVID pandemic including information like total cases, tests, and hospitalizations. It is based only on official sources and builds on the excellent work of [COVID Atlas](https://covidatlas.com/) and the [COVID Tracking Project](https://covidtracking.com/). This dataset includes only the most recent observation for each variable. For a historical record of the available data as of a particular date, see the `covid_historical` dataset
+- `covid_historical`: Same as the covid table, but with an additional `vintage` column that tracks the date the data was accessed.
 - `demographics`: A dataset that incorporates baseline information about the different U.S. geographies. Includes data such as total population, fraction of the population over 65, fraction of individuals who are uninsured, etc...
 - `economics`: This dataset includes information about the state of the economy in different geographic areas.
+- `counites`: Reference table with basic information about us counties
+- `states`: Reference table with basic information about us states
 
 ### Data keys
 
