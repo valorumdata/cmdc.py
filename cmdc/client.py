@@ -1,15 +1,13 @@
-#%%
 import pathlib
 import urllib
-from typing import Dict, List, Any, Union, Optional
-from urllib3.util.retry import Retry
+from typing import Any, Dict, List, Optional, Union
 
-from email_validator import validate_email, EmailNotValidError
 import pandas as pd
 import requests
-from requests.adapters import HTTPAdapter
 import us
-
+from email_validator import EmailNotValidError, validate_email
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE_URL = "https://api.covid.valorum.ai"
 
@@ -103,7 +101,6 @@ class Endpoint:
         return self.__repr__()
 
 
-#%%
 def create_filter_rhs(x: Any) -> str:
     ineqs = {">": "gt", "<": "lt", "!=": "neq"}
     if isinstance(x, (list, tuple, set)):
@@ -134,9 +131,8 @@ def setup_session() -> requests.Session:
     return http
 
 
-#%%
 class Client:
-    def __init__(self, apikey: Optional[str]=None):
+    def __init__(self, apikey: Optional[str] = None):
         """
         API Client for the CMDC database
 
@@ -169,10 +165,9 @@ class Client:
         ```
 
         """
-        self._current_request = {}
-        self._current_request_headers = {}
-        self._set_key(apikey)
+        self._current_request: Dict[Dict[str, Any]] = {}
         self.sess = setup_session()
+        self._set_key(apikey)
         self._counties = None
         res = self.sess.get(BASE_URL + "/swagger.json")
         if not res.ok:
@@ -296,8 +291,8 @@ class Client:
         The return value is a dictionary mapping query paths to the filters
         that apply to that request
         """
-        common_filters = {}
-        out = {}
+        common_filters: Dict[str, str] = {}
+        out: Dict[str, Dict[str, str]] = {}
         # for each request
         for path, filts in self._current_request.items():
             out[path] = {}
@@ -459,5 +454,4 @@ class Client:
         Reset the current query builder.
         """
         self._current_request = {}
-        self._current_request_headers = {}
         return self
