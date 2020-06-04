@@ -162,7 +162,7 @@ class Client:
         """
         self._current_request = {}
         self._current_request_headers = {}
-        self._key = apikey
+        self._set_key(apikey)
         self.sess = setup_session()
         self._counties = None
         res = self.sess.get(BASE_URL + "/swagger.json")
@@ -216,13 +216,17 @@ class Client:
 
         return self._key
 
-    @key.setter
-    def key(self, x):
+    def _set_key(self, x):
         if x is not None:
             self.sess.headers.update({"apikey": x})
             with open(self._keypath, "w") as f:
                 f.write(x)
         self._key = x
+
+    @key.setter
+    def key(self, x):
+        return self._set_key(x)
+
 
     def register(self) -> str:
         msg = "Please provide an email address to request a free API key: "
@@ -444,6 +448,3 @@ class Client:
         self._current_request = {}
         self._current_request_headers = {}
         return self
-
-
-# %%
