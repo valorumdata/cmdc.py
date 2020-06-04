@@ -155,4 +155,4 @@ c = Client()
 df = c.fetch()
 ```
 
-There are more examples in the `examples` folder. We encourage you to explore them and to reach out if you have questions!
+There are more examples in the `cmdc/examples.py` file. We encourage you to explore them and to reach out if you have questions!
