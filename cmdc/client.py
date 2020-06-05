@@ -179,6 +179,7 @@ class Client:
             msg = (
                 "No API key found. Please request a "
                 "free API key by calling the `register` method"
+                "\nYou can do this by running the code `cmdc.Client().register()"
             )
             print(msg)
 
