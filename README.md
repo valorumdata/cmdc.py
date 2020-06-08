@@ -22,6 +22,15 @@ More information about our project and what data is collected can be found on ou
 
 We are always looking to hear from both those who would like to help us build CMDC and those who would like use CMDC. [Please reach out to us](https://covid.valorum.ai/contact)!
 
+## Installation
+
+This package is available on the [Python Package Index (pypi)](https://pypi.org/project/cmdc/) and can be installed by
+
+```bash
+pip install cmdc
+```
+
+
 ## Datasets
 
 We will try to keep the broad list of datasets/topics on this page up-to-date, but, as we work to collect more data, it may fall behind. You can always find the available datasets in the client object by writing:
