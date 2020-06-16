@@ -244,6 +244,13 @@ class Client:
 
         res = requests.post(BASE_URL + "/auth", data=dict(email=email))
 
+        if res.status_code == 409:
+            # key already exists
+            res2 = requests.get(BASE_URL + "/auth/" + email)
+            if res2.status_code != 200:
+                msg = "Email address already in use. Failed to fetch " "existing key"
+                raise NetworkError(res2, msg)
+            res = res2
         if not res.ok:
             raise NetworkError(res, "Could not request api key.")
 
