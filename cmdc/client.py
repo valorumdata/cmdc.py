@@ -1,3 +1,4 @@
+import io
 import pathlib
 from typing import Any, Dict, List, Optional, Union
 
@@ -314,10 +315,13 @@ class Client:
 
     def _url_to_df(self, url: str) -> pd.DataFrame:
         "Make GET request to `url` and parse resulting JSON as DataFrame"
-        res = self.sess.get(url)
+        res = self.sess.get(url, headers={"Accept": "text/csv"})
         if not res.ok:
             raise NetworkError(res, f"Error fetching data from {url}")
-        df = pd.DataFrame(res.json())
+        with io.BytesIO() as f:
+            f.write(res.content)
+            f.seek(0)
+            df = pd.read_csv(f)
         for col in ["dt", "meta_date", "vintage"]:
             if col in list(df):
                 df[col] = pd.to_datetime(df[col])
