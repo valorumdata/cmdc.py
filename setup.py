@@ -40,7 +40,7 @@ setup(
     ],
     packages=["cmdc"],
     python_requires=">=3.5, <4",
-    install_requires=["requests", "pandas", "email_validator", "us"],
+    install_requires=["requests", "pandas", "email_validator", "us", "urllib3"],
     project_urls={  # Optional
         "Bug Reports": "https://github.com/valorumdata/cmdc.py/issues",
         "Source": "https://github.com/valorumdata/cmdc.py",

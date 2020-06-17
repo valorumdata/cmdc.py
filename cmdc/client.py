@@ -1,15 +1,18 @@
 import pathlib
-import urllib
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import requests
 import us
 from email_validator import EmailNotValidError, validate_email
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
-BASE_URL = "https://api.covid.valorum.ai"
+from .utils import (
+    BASE_URL,
+    _combine_dfs,
+    _create_query_string,
+    _reshape_df,
+    setup_session,
+)
 
 
 class NetworkError(Exception):
@@ -43,12 +46,13 @@ class Endpoint:
         for p in parameters:
             if isinstance(p, dict) and len(p) == 1 and "$ref" in p:
                 # look up parameter
-                param = list(p.values())[0]
+                param_list = list(p.values())
+                param = param_list[0]
                 prefix = "#/parameters/"
                 assert param.startswith(prefix)
 
                 self.valid_filters.append(
-                    client._spec["parameters"][param.replace(prefix, "")]
+                    client.spec["parameters"][param.replace(prefix, "")]
                 )
 
         self.filter_names = [x["name"] for x in self.valid_filters]
@@ -64,13 +68,14 @@ class Endpoint:
         Validate a given set of query parameters and confirm they are applicable
         for this endpoint
         """
-        if state is not None and self.has_filter("fips"):
-            if "fips" in filters:
-                msg = f"Both state {state} and fips {filters['fips']} were passed."
+        col = "fips" if self.path == "covid" else "location"
+        if state is not None and self.has_filter(col):
+            if col in filters:
+                msg = f"Both state {state} and {col} {filters[col]} were passed."
                 msg += " Only one may be applied at a time"
                 raise ValueError(msg)
 
-            filters["fips"] = self.client.fips_in_states(state)
+            filters[col] = self.client.fips_in_states(state)
 
         # process filters
         for name in filters:
@@ -88,7 +93,7 @@ class Endpoint:
 
     def __repr__(self) -> str:
         filter_names = [x["name"] for x in self.valid_filters]
-        description = self.client._spec["paths"]["/" + self.path]["get"]["description"]
+        description = self.client.spec["paths"]["/" + self.path]["get"]["description"]
         msg = (
             f"Request builder for {self.path} endpoint"
             f"\nValid filters are {', '.join(filter_names)}"
@@ -99,36 +104,6 @@ class Endpoint:
     @property
     def __doc__(self):
         return self.__repr__()
-
-
-def create_filter_rhs(x: Any) -> str:
-    ineqs = {">": "gt", "<": "lt", "!=": "neq"}
-    if isinstance(x, (list, tuple, set)):
-        # use in
-        return f"in.({','.join(map(str, x))})"
-
-    if isinstance(x, str):
-        # check for inequality
-        for op in ineqs:
-            if op in x:
-                if f"{op}=" in x:
-                    return x.replace(f"{op}=", ineqs[op] + "e.")
-                return x.replace(op, ineqs[op] + ".")
-    return f"eq.{x}"
-
-
-def setup_session() -> requests.Session:
-    retry_strategy = Retry(
-        total=5,
-        status_forcelist=[429, 500, 502, 503, 504],
-        method_whitelist=["HEAD", "GET", "OPTIONS"],
-        backoff_factor=0.2,
-    )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    http = requests.Session()
-    http.mount("https://", adapter)
-    http.mount("http://", adapter)
-    return http
 
 
 class Client:
@@ -165,7 +140,7 @@ class Client:
         ```
 
         """
-        self._current_request: Dict[Dict[str, Any]] = {}
+        self._current_request: Dict[str, Dict[str, Any]] = {}
         self.sess = setup_session()
         self._set_key(apikey)
         self._counties = None
@@ -188,13 +163,13 @@ class Client:
     def counties(self):
         if self._counties is None:
             # fetch
-            res = self.sess.get(BASE_URL + "/counties")
+            res = self.sess.get(BASE_URL + "/us_counties")
             if not res.ok:
                 raise ValueError("Failed to get list of counties")
 
             self._counties = pd.DataFrame(res.json())
             self._counties["state"] = (
-                self._counties["fips"].astype(str).str.zfill(5).str[:2].astype(int)
+                self._counties["location"].astype(str).str.zfill(5).str[:2].astype(int)
             )
 
         return self._counties
@@ -203,7 +178,7 @@ class Client:
         if isinstance(states, (int, str)):
             states = [states]
         states = [int(us.states.lookup(str(x).zfill(2)).fips) for x in states]
-        fips = self.counties.query("state in @states")["fips"].unique()
+        fips = self.counties.query("state in @states")["location"].unique()
         return sorted(list(fips)) + states
 
     ## API key handling
@@ -263,7 +238,7 @@ class Client:
         return self.key
 
     @property
-    def _keypath(self):
+    def _keypath(self) -> pathlib.Path:
         """
         Path to the file with the user's apikey. Makes sure parent directory
         exists
@@ -274,14 +249,14 @@ class Client:
         return keyfile
 
     ## Requests
-    def _unionize_filters(self) -> Dict[str, Dict[str, str]]:
+    def _unionize_filters(self) -> Dict[str, Dict[str, Any]]:
         """
         Process filters built up in request. Rules are:
 
         - If the name of the filter is `variable` it is applied request by
           request. Thus different endpoints can have different values for the
           `variables` filter
-        - If the name of the filter is anything else (e.g. vintage, fips, dt,
+        - If the name of the filter is anything else (e.g. vintage, location, dt,
           meta_date), it is applied to ALL requests
 
         While processing the common filters, if the value passed in any two
@@ -290,7 +265,7 @@ class Client:
 
         ```ipython
         c = Client()
-        c.economics(fips=12095).demographics(fips=4013)
+        c.economics(location=12095).demographics(location=4013)
         c._unionize_filters()
         ```
 
@@ -300,53 +275,42 @@ class Client:
         that apply to that request
         """
         common_filters: Dict[str, str] = {}
-        out: Dict[str, Dict[str, str]] = {}
+        out: Dict[str, Dict[str, Any]] = {}
         # for each request
-        for path, filts in self._current_request.items():
+        for path, filters in self._current_request.items():
             out[path] = {}
 
             # for each filter in this request
-            for filt_name, filt_val in filts.items():
+            for filter_name, filter_val in filters.items():
                 # if the filter is for `variable` pass it through directly and
                 # do not add it to common_filters
-                if filt_name == "variable":
-                    out[path][filt_name] = filt_val
+                if filter_name == "variable":
+                    out[path][filter_name] = filter_val
 
                     continue
 
                 # if we have seen this filter, check to make sure we don't have
                 # conflicting values
-                if filt_name in common_filters:
-                    current = common_filters[filt_name]
-                    if current != filt_val:
+                if filter_name in common_filters:
+                    current = common_filters[filter_name]
+                    if current != filter_val:
                         msg = (
                             "Found conflicting values for common "
-                            f"filter {filt_name}. "
-                            f"Found both {filt_val} and {current}"
+                            f"filter {filter_name}. "
+                            f"Found both {filter_val} and {current}"
                         )
                         raise ValueError(msg)
                 else:
                     # add this value to the common_filters tracker
-                    common_filters[filt_name] = filt_val
+                    common_filters[filter_name] = filter_val
 
         # for each request, add in common filters that apply
         for path in out:
-            for filt_name, filt_val in common_filters.items():
-                if self.__getattr__(path).has_filter(filt_name):
-                    out[path][filt_name] = filt_val
+            for filter_name, filter_val in common_filters.items():
+                if self.__getattr__(path).has_filter(filter_name):
+                    out[path][filter_name] = filter_val
 
         return out
-
-    def _create_query_string(self, path: str, filters: Dict[str, Any]) -> str:
-        """
-        Given a path and filters to apply to that path, construct a query string
-        """
-        prepped_filters = {k: create_filter_rhs(v) for k, v in filters.items()}
-        query = BASE_URL + "/" + path
-        if len(prepped_filters) > 0:
-            query += "?" + urllib.parse.urlencode(prepped_filters)
-
-        return query
 
     def _url_to_df(self, url: str) -> pd.DataFrame:
         "Make GET request to `url` and parse resulting JSON as DataFrame"
@@ -360,42 +324,6 @@ class Client:
 
         return df
 
-    def _reshape_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Reshape a DataFrame from long to wide form, adhering to the following
-        rules:
-
-        - If the `meta_date` column exists, replace `variable` column with
-          {variable}_{meta_date} and then drop `meta_date`
-        - Construct a pivot_table where the columns come from the `variable`
-          column, values come from the `value` column, and all other columns are
-          used as an index
-        """
-        if df.shape[0] == 0:
-            # empty dataframe
-            return df
-
-        cols = list(df)
-        for c in ["variable", "value"]:
-            if c not in cols:
-                gh_issues = "https://github.com/valorumdata/cmdc.py/issues/new"
-                msg = (
-                    f"Column {c} not found in DataFrame. "
-                    f"Please report a bug at {gh_issues}"
-                )
-                raise ValueError(msg)
-        if "meta_date" in cols:
-            if "variable" in cols:
-                df["variable"] = (
-                    df["variable"].astype(str) + "_" + df["meta_date"].astype(str)
-                )
-                df.drop("meta_date", axis="columns")
-
-        idx = list(set(cols) - set(["variable", "value"]))
-        return df.pivot_table(
-            index=idx, columns="variable", values="value"
-        ).reset_index()
-
     def _run_queries(self, urls: Dict[str, str]) -> Dict[str, pd.DataFrame]:
         """
         Transform a dict mapping paths to request urls, to a dict mapping paths
@@ -404,24 +332,15 @@ class Client:
         # TODO: optimize and make async
         return {k: self._url_to_df(v) for k, v in urls.items()}
 
-    def _combine_dfs(self, dfs: List[pd.DataFrame]) -> pd.DataFrame:
-        """
-        Merge all `dfs` on common columns (typically in the index)
-        """
-        out = dfs[0]
-        for right in dfs[1:]:
-            out = out.merge(right)
-        return out
-
     def fetch(self) -> pd.DataFrame:
         if len(self._current_request) == 0:
             print("You have no requests built up! Try adding a dataset")
             return None
         filters = self._unionize_filters()
-        query_strings = {k: self._create_query_string(k, v) for k, v in filters.items()}
+        query_strings = {k: _create_query_string(k, v) for k, v in filters.items()}
         dfs = self._run_queries(query_strings)
-        wide_dfs = [self._reshape_df(v) for v in dfs.values()]
-        output = self._combine_dfs(wide_dfs)
+        wide_dfs = [_reshape_df(v) for v in dfs.values()]
+        output = _combine_dfs(wide_dfs)
 
         self.reset()
 
@@ -433,11 +352,11 @@ class Client:
             msg = f"Unknown dataset {ds}. Known datasets are {dir(self)}"
             raise ValueError(msg)
 
-        route = self._spec["paths"]["/" + ds]["get"]
+        route = self.spec["paths"]["/" + ds]["get"]
         return Endpoint(self, ds, route["parameters"])
 
     def __dir__(self) -> List[str]:
-        paths = self._spec["paths"]
+        paths = self.spec["paths"]
         return [x.strip("/") for x in paths if x != "/"]
 
     @property
@@ -463,3 +382,7 @@ class Client:
         """
         self._current_request = {}
         return self
+
+    @property
+    def spec(self):
+        return self._spec

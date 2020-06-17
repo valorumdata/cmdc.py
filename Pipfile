@@ -9,12 +9,14 @@ black = "*"
 isort = "*"
 flake8 = "*"
 cmdc = {editable = true, path = "."}
+importlib-metadata = "*"
 
 [packages]
 requests = "*"
 pandas = "*"
 email-validator = "*"
 us = "*"
+urllib3 = "*"
 
 [requires]
 python_version = "3.7"
