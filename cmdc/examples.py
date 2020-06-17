@@ -6,7 +6,7 @@ def multiple_dataset_all(c=cmdc.Client()):
     This example loads multiple datasets (demographics and covid) for all
     us fips
     """
-    c.demographics().covid()
+    c.demographics().covid_us()
     df = c.fetch()
     return df
 
@@ -16,7 +16,7 @@ def multiple_dataset_states_only(c=cmdc.Client()):
     This example loads multiple datasets (demographics and covid) for all
     us states -- It selects states by only taking fips < 100
     """
-    c.demographics().covid(fips="<100")
+    c.demographics().covid_us(location="<100")
     df = c.fetch()
     return df
 
@@ -26,7 +26,7 @@ def multiple_dataset_counties_only(c=cmdc.Client()):
     This example loads multiple datasets (demographics and covid) for all
     us states -- It selects counties by only taking fips >= 1000
     """
-    c.demographics().covid(fips=">=1000")
+    c.demographics().covid_us(location=">=1000")
     df = c.fetch()
     return df
 
@@ -46,7 +46,7 @@ def single_dataset_deaths_filter(c=cmdc.Client()):
     This example loads a subset of the demographic data by selecting
     a few variables and a few fips codes
     """
-    c.covid(fips="<100", variable="deaths_total", value=">100")
+    c.covid_us(location="<100", variable="deaths_total", value=">100")
     df = c.fetch()
     return df
 
