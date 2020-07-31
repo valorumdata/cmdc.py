@@ -344,7 +344,6 @@ class Client:
         query_strings = {k: _create_query_string(k, v) for k, v in filters.items()}
         return query_strings
 
-
     def fetch(self) -> pd.DataFrame:
         query_strings = self._get_urls()
         dfs = self._run_queries(query_strings)

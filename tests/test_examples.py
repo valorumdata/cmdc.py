@@ -7,7 +7,8 @@ import covidcountydata.examples
 
 
 @pytest.mark.parametrize(
-    "func", [x[1] for x in inspect.getmembers(covidcountydata.examples, inspect.isfunction)]
+    "func",
+    [x[1] for x in inspect.getmembers(covidcountydata.examples, inspect.isfunction)],
 )
 def test_examples(client, func):
     df = func(client)
