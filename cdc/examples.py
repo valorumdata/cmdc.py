@@ -1,7 +1,7 @@
-import cmdc
+import ccd
 
 
-def multiple_dataset_all(c=cmdc.Client()):
+def multiple_dataset_all(c=ccd.Client()):
     """
     This example loads multiple datasets (demographics and covid) for all
     us fips
@@ -11,7 +11,7 @@ def multiple_dataset_all(c=cmdc.Client()):
     return df
 
 
-def multiple_dataset_states_only(c=cmdc.Client()):
+def multiple_dataset_states_only(c=ccd.Client()):
     """
     This example loads multiple datasets (demographics and covid) for all
     us states -- It selects states by only taking fips < 100
@@ -21,7 +21,7 @@ def multiple_dataset_states_only(c=cmdc.Client()):
     return df
 
 
-def multiple_dataset_counties_only(c=cmdc.Client()):
+def multiple_dataset_counties_only(c=ccd.Client()):
     """
     This example loads multiple datasets (demographics and covid) for all
     us states -- It selects counties by only taking fips >= 1000
@@ -31,7 +31,7 @@ def multiple_dataset_counties_only(c=cmdc.Client()):
     return df
 
 
-def single_dataset_all(c=cmdc.Client()):
+def single_dataset_all(c=ccd.Client()):
     """
     This example loads the within county mobility data for all fips
     and all dates
@@ -41,7 +41,7 @@ def single_dataset_all(c=cmdc.Client()):
     return df
 
 
-def single_dataset_deaths_filter(c=cmdc.Client()):
+def single_dataset_deaths_filter(c=ccd.Client()):
     """
     This example loads a subset of the demographic data by selecting
     a few variables and a few fips codes
@@ -51,7 +51,7 @@ def single_dataset_deaths_filter(c=cmdc.Client()):
     return df
 
 
-def single_dataset_multiplestatesallcounties(c=cmdc.Client()):
+def single_dataset_multiplestatesallcounties(c=ccd.Client()):
     """
     This example loads the within county mobility data for all counties
     in multiple states and all dates
@@ -63,7 +63,7 @@ def single_dataset_multiplestatesallcounties(c=cmdc.Client()):
     return df
 
 
-def single_dataset_onestateallcounties(c=cmdc.Client()):
+def single_dataset_onestateallcounties(c=ccd.Client()):
     """
     This example loads the within county mobility data for a single
     state (CA) and all dates
@@ -78,7 +78,7 @@ def single_dataset_onestateallcounties(c=cmdc.Client()):
     return df
 
 
-def single_dataset_variableselect(c=cmdc.Client()):
+def single_dataset_variableselect(c=ccd.Client()):
     """
     This example loads a subset of the demographic data by selecting
     a few variables and a few fips codes

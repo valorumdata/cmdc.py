@@ -3,11 +3,11 @@ import inspect
 import pandas as pd
 import pytest
 
-import cmdc.examples
+import ccd.examples
 
 
 @pytest.mark.parametrize(
-    "func", [x[1] for x in inspect.getmembers(cmdc.examples, inspect.isfunction)]
+    "func", [x[1] for x in inspect.getmembers(ccd.examples, inspect.isfunction)]
 )
 def test_examples(client, func):
     df = func(client)

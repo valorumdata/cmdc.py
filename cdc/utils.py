@@ -6,7 +6,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-BASE_URL = "https://api.covid.valorum.ai"
+BASE_URL = "https://api.covidcountydata.org"
 
 
 def setup_session() -> requests.Session:
@@ -57,7 +57,7 @@ def _reshape_df(df: pd.DataFrame) -> pd.DataFrame:
     cols = list(df)
     for c in ["variable", "value"]:
         if c not in cols:
-            gh_issues = "https://github.com/valorumdata/cmdc.py/issues/new"
+            gh_issues = "https://github.com/CovidCountyData/ccd.py/issues/new"
             msg = (
                 f"Column {c} not found in DataFrame. "
                 f"Please report a bug at {gh_issues}"

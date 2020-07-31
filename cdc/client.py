@@ -110,7 +110,7 @@ class Endpoint:
 class Client:
     def __init__(self, apikey: Optional[str] = None):
         """
-        API Client for the CMDC database
+        API Client for the CCD database
 
         Parameters
         ----------
@@ -155,7 +155,7 @@ class Client:
             msg = (
                 "No API key found. Please request a "
                 "free API key by calling the `register` method"
-                "\nYou can do this by running the code `cmdc.Client().register()"
+                "\nYou can do this by running the code `ccd.Client().register()"
             )
             print(msg)
 
@@ -245,7 +245,7 @@ class Client:
         exists
         """
         home = pathlib.Path.home()
-        keyfile = home / ".cmdc" / "apikey"
+        keyfile = home / ".ccd" / "apikey"
         keyfile.parent.mkdir(parents=True, exist_ok=True)
         return keyfile
 
@@ -368,7 +368,7 @@ class Client:
         return self.__dir__()
 
     def __repr__(self) -> str:
-        out = "CMDC Client"
+        out = "CCD Client"
 
         if len(self._current_request) > 0:
             out += ". Current request:\n  -"

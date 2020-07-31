@@ -8,7 +8,7 @@ pytest = "*"
 black = "*"
 isort = "*"
 flake8 = "*"
-cmdc = {editable = true, path = "."}
+ccd = {editable = true, path = "."}
 importlib-metadata = "*"
 
 [packages]

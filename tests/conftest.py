@@ -2,9 +2,9 @@ import os
 
 import pytest
 
-import cmdc
+import ccd
 
 
 @pytest.fixture(scope="session")
 def client():
-    return cmdc.Client(apikey=os.environ.get("CMDC_API_KEY", None))
+    return ccd.Client(apikey=os.environ.get("CCD_API_KEY", None))
