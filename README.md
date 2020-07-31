@@ -1,5 +1,15 @@
 # cmdc.py
 
+<div style="background: repeating-linear-gradient(to right,  #f6ba52,  #f6ba52 10px,  #ffd180 10px,  #ffd180 20px);">WARNING</div>
+
+**Notice**: The `cmdc` library has been renamed to `covidcountydata`
+
+Please use that package instead of this one. See the [covidcountydata package on GitHub](https://github.com/CovidCountyData/covidcountydata.py) for more information
+
+This package will remain active for historical users of cmdc, but we strongly encourage all users to upgrade to the new package to continue receiving new features and bug fixes.
+
+# Old documentation
+
 `cmdc` is a Python client for accessing the COVID Modeling Data Collaborative database
 
 Links:
