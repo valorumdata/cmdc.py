@@ -57,7 +57,7 @@ def _reshape_df(df: pd.DataFrame) -> pd.DataFrame:
     cols = list(df)
     for c in ["variable", "value"]:
         if c not in cols:
-            gh_issues = "https://github.com/CovidCountyData/ccd.py/issues/new"
+            gh_issues = "https://github.com/CovidCountyData/covidcountydata.py/issues/new"
             msg = (
                 f"Column {c} not found in DataFrame. "
                 f"Please report a bug at {gh_issues}"

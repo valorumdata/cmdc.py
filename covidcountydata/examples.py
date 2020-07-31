@@ -1,4 +1,4 @@
-import ccd
+import covidcountydata as ccd
 
 
 def multiple_dataset_all(c=ccd.Client()):

@@ -9,12 +9,12 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="ccd",
+    name="covidcountydata",
     version="0.2.0",
     description="Python client for accessing the COVID County Data database",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/CovidCountyData/ccd.py",
+    url="https://github.com/CovidCountyData/covidcountydata.py",
     author="Valorum Data",
     author_email="info@valorumdata.com",
     classifiers=[  # Optional
@@ -38,11 +38,11 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    packages=["ccd"],
+    packages=["covidcountydata"],
     python_requires=">=3.5, <4",
     install_requires=["requests", "pandas", "email_validator", "us", "urllib3"],
     project_urls={  # Optional
-        "Bug Reports": "https://github.com/CovidCountyData/ccd.py/issues",
-        "Source": "https://github.com/CovidCountyData/ccd.py",
+        "Bug Reports": "https://github.com/CovidCountyData/covidcountydata.py/issues",
+        "Source": "https://github.com/CovidCountyData/covidcountydata.py",
     },
 )

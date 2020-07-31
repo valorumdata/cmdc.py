@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import ccd
+import covidcountydata as ccd
 
 
 @pytest.fixture(scope="session")

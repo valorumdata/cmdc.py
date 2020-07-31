@@ -8,7 +8,8 @@ pytest = "*"
 black = "*"
 isort = "*"
 flake8 = "*"
-ccd = {editable = true, path = "."}
+ipython= "*"
+covidcountydata = {editable = true, path = "."}
 importlib-metadata = "*"
 
 [packages]

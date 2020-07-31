@@ -110,7 +110,7 @@ class Endpoint:
 class Client:
     def __init__(self, apikey: Optional[str] = None):
         """
-        API Client for the CCD database
+        API Client for the Covid County Data database
 
         Parameters
         ----------
@@ -245,7 +245,7 @@ class Client:
         exists
         """
         home = pathlib.Path.home()
-        keyfile = home / ".ccd" / "apikey"
+        keyfile = home / ".covidcountydata" / "apikey"
         keyfile.parent.mkdir(parents=True, exist_ok=True)
         return keyfile
 
@@ -336,12 +336,17 @@ class Client:
         # TODO: optimize and make async
         return {k: self._url_to_df(v) for k, v in urls.items()}
 
-    def fetch(self) -> pd.DataFrame:
+    def _get_urls(self):
         if len(self._current_request) == 0:
             print("You have no requests built up! Try adding a dataset")
             return None
         filters = self._unionize_filters()
         query_strings = {k: _create_query_string(k, v) for k, v in filters.items()}
+        return query_strings
+
+
+    def fetch(self) -> pd.DataFrame:
+        query_strings = self._get_urls()
         dfs = self._run_queries(query_strings)
         wide_dfs = [_reshape_df(v) for v in dfs.values()]
         output = _combine_dfs(wide_dfs)
@@ -368,7 +373,7 @@ class Client:
         return self.__dir__()
 
     def __repr__(self) -> str:
-        out = "CCD Client"
+        out = "Covid County Data Client"
 
         if len(self._current_request) > 0:
             out += ". Current request:\n  -"
